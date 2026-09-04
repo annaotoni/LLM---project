@@ -48,7 +48,7 @@ async def test_grafo_encerra_sem_chamar_ferramenta_quando_desnecessario() -> Non
     gateway = GatewayFalso([MensagemFalsa(content="oi! tudo bem?")])
     grafo = construir_grafo(gateway, [])
 
-    resultado = await grafo.ainvoke(ESTADO_INICIAL)
+    resultado = await grafo.ainvoke({**ESTADO_INICIAL, "gateway": gateway, "ferramentas": []})
 
     assert resultado["mensagens"] == ESTADO_INICIAL["mensagens"]
     assert resultado["precisa_ferramenta"] is False
@@ -73,7 +73,7 @@ async def test_grafo_executa_ferramenta_e_incorpora_resultado_no_historico() -> 
     )
     grafo = construir_grafo(gateway, [ferramenta])
 
-    resultado = await grafo.ainvoke(ESTADO_INICIAL)
+    resultado = await grafo.ainvoke({**ESTADO_INICIAL, "gateway": gateway, "ferramentas": [ferramenta]})
 
     mensagens = resultado["mensagens"]
     assert mensagens[-1] == {"role": "tool", "tool_call_id": "call_1", "content": "resultado=5"}
@@ -94,7 +94,7 @@ async def test_grafo_para_apos_numero_maximo_de_iteracoes() -> None:
     )
     grafo = construir_grafo(gateway, [ferramenta])
 
-    resultado = await grafo.ainvoke(ESTADO_INICIAL)
+    resultado = await grafo.ainvoke({**ESTADO_INICIAL, "gateway": gateway, "ferramentas": [ferramenta]})
 
     assert resultado["precisa_ferramenta"] is True
     assert resultado["iteracoes"] > 1

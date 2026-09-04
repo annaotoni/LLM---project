@@ -32,7 +32,9 @@ def criar_ferramenta_consultar_pedido(
     """Isola a consulta por tenant na origem — um pedido de outra loja nunca é alcançável."""
 
     async def executar(argumentos: dict[str, Any]) -> str:
-        numero_pedido = argumentos["numero_pedido"]
+        numero_pedido = argumentos.get("numero_pedido")
+        if not numero_pedido:
+            return "Parâmetro numero_pedido ausente ou inválido."
         pedido = await repositorio.buscar_por_numero(
             tenant_id=tenant_id, numero_pedido=numero_pedido
         )

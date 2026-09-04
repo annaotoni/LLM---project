@@ -39,7 +39,10 @@ def criar_ferramenta_buscar_documentos(
     """Isola a busca por tenant na origem — o modelo só escolhe os termos, nunca o tenant."""
 
     async def executar(argumentos: dict[str, Any]) -> str:
-        embedding_consulta = await gateway.embed(argumentos["consulta"])
+        consulta = argumentos.get("consulta")
+        if not consulta:
+            return "Parâmetro consulta ausente ou inválido."
+        embedding_consulta = await gateway.embed(consulta)
         documentos = await repositorio.buscar_similares(
             tenant_id=tenant_id,
             embedding_consulta=embedding_consulta,
