@@ -11,7 +11,6 @@ from app.adapters.repositories.postgres.pedido_repository import PedidoRepositor
 from app.domain.entities.documento import DocumentoRecuperado
 from app.domain.entities.pedido import Pedido
 
-
 # ---------- _vetor_para_sql ----------
 
 def test_vetor_para_sql_formata_corretamente() -> None:
