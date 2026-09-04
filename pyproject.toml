@@ -1,0 +1,39 @@
+[project]
+name = "copiloto-atendimento"
+version = "0.1.0"
+description = "Copiloto de Atendimento — RAG + agente com tool calling, multi-tenant"
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi>=0.115",
+    "uvicorn[standard]>=0.32",
+    "pydantic-settings>=2.5",
+    "asyncpg>=0.30",
+    "litellm>=1.50",
+    "pyyaml>=6.0",
+    "langgraph>=0.2",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.3",
+    "pytest-asyncio>=0.24",
+    "httpx>=0.27",
+    "ruff>=0.7",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests/unit", "tests/feature"]
+markers = [
+    "eval: avaliação de qualidade contra Postgres+pgvector e Ollama reais — não roda no pytest padrão",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["app*"]
