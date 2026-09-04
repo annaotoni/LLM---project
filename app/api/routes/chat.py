@@ -2,7 +2,7 @@ import logging
 from collections.abc import AsyncIterator
 from typing import Annotated
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Request
 from fastapi.responses import StreamingResponse
 
 from app.adapters.repositories.contracts.documento_repository_interface import (
@@ -16,10 +16,11 @@ from app.adapters.repositories.postgres.pedido_repository import get_pedido_repo
 from app.adapters.tools.buscar_documentos import criar_ferramenta_buscar_documentos
 from app.adapters.tools.consultar_pedido import criar_ferramenta_consultar_pedido
 from app.api.dependencies import obter_tenant_id
+from app.api.limiter import limiter
 from app.config.settings import Settings, get_settings
 from app.domain.dto.chat import MensagemChatEntrada
 from app.domain.guardrails.pii import mascarar_pii, mascarar_stream_pii
-from app.orchestration.agent.graph import construir_grafo
+from app.orchestration.agent.graph import GRAFO
 from app.orchestration.context.builder import construir_contexto
 from app.orchestration.gateway.model_gateway import ModelGateway, get_model_gateway
 
@@ -29,7 +30,9 @@ router = APIRouter(tags=["chat"])
 
 
 @router.post("/chat")
+@limiter.limit("20/minute")
 async def chat(
+    request: Request,
     entrada: MensagemChatEntrada,
     tenant_id: Annotated[str, Depends(obter_tenant_id)],
     gateway: Annotated[ModelGateway, Depends(get_model_gateway)],
@@ -50,14 +53,15 @@ async def chat(
         criar_ferramenta_consultar_pedido(tenant_id=tenant_id, repositorio=pedido_repositorio),
     ]
 
-    grafo = construir_grafo(gateway, ferramentas)
-    resultado = await grafo.ainvoke(
+    resultado = await GRAFO.ainvoke(
         {
             "mensagens": contexto.mensagens,
             "tenant_id": tenant_id,
             "prompt_id": contexto.prompt_id,
             "iteracoes": 0,
             "precisa_ferramenta": False,
+            "gateway": gateway,
+            "ferramentas": ferramentas,
         }
     )
 

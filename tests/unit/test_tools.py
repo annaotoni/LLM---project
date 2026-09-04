@@ -90,3 +90,25 @@ async def test_consultar_pedido_nao_encontrado() -> None:
     resultado = await ferramenta.executar({"numero_pedido": "9999"})
 
     assert "não encontrado" in resultado
+
+
+@pytest.mark.asyncio
+async def test_consultar_pedido_argumento_ausente_retorna_mensagem_de_erro() -> None:
+    repositorio = PedidoRepositorioFalso(None)
+    ferramenta = criar_ferramenta_consultar_pedido(tenant_id="loja-azul", repositorio=repositorio)
+
+    resultado = await ferramenta.executar({})
+
+    assert "ausente" in resultado.lower() or "inválido" in resultado.lower()
+
+
+@pytest.mark.asyncio
+async def test_buscar_documentos_argumento_ausente_retorna_mensagem_de_erro() -> None:
+    repositorio = DocumentoRepositorioFalso([])
+    ferramenta = criar_ferramenta_buscar_documentos(
+        tenant_id="loja-azul", repositorio=repositorio, gateway=GatewayFalso(), top_k=4
+    )
+
+    resultado = await ferramenta.executar({})
+
+    assert "ausente" in resultado.lower() or "inválido" in resultado.lower()

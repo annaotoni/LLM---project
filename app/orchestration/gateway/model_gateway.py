@@ -17,6 +17,10 @@ class ModelGateway:
     def __init__(self, settings: Settings) -> None:
         self._settings = settings
 
+    def _api_base(self) -> str | None:
+        """api_base só é necessário para Ollama; providers hospedados usam o endpoint canônico do litellm."""
+        return self._settings.ollama_base_url if self._settings.llm_provider == "ollama" else None
+
     async def stream_completion(
         self,
         *,
@@ -28,7 +32,7 @@ class ModelGateway:
         resposta = await litellm.acompletion(
             model=self._settings.llm_model,
             messages=mensagens,
-            api_base=self._settings.ollama_base_url,
+            api_base=self._api_base(),
             stream=True,
         )
         async for pedaco in resposta:
@@ -52,7 +56,7 @@ class ModelGateway:
             model=self._settings.llm_model,
             messages=mensagens,
             tools=tools,
-            api_base=self._settings.ollama_base_url,
+            api_base=self._api_base(),
             stream=False,
         )
         self._registrar_chamada(
@@ -67,7 +71,7 @@ class ModelGateway:
         resposta = await litellm.aembedding(
             model=self._settings.llm_embedding_model,
             input=[texto],
-            api_base=self._settings.ollama_base_url,
+            api_base=self._api_base(),
         )
         return resposta.data[0]["embedding"]
 
