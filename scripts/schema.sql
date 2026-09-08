@@ -25,3 +25,13 @@ CREATE TABLE IF NOT EXISTS pedidos (
 );
 
 CREATE INDEX IF NOT EXISTS idx_pedidos_tenant_numero ON pedidos (tenant_id, numero_pedido);
+
+CREATE TABLE IF NOT EXISTS tenants (
+    tenant_id TEXT PRIMARY KEY,
+    -- SHA-256 da chave de API — nunca o texto puro; um vazamento do banco não expõe a chave em si.
+    chave_api_hash TEXT NOT NULL UNIQUE,
+    -- Modelo litellm (<provider>/<nome>) específico da loja — NULL usa o LLM_MODEL global.
+    -- Preparado para um futuro modelo fine-tunado por tenant; nenhum treino acontece hoje.
+    modelo_override TEXT,
+    criado_em TIMESTAMPTZ NOT NULL DEFAULT now()
+);

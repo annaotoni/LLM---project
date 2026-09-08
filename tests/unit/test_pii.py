@@ -20,6 +20,14 @@ def test_mascarar_pii_preserva_texto_sem_dado_sensivel() -> None:
     assert mascarar_pii(texto) == texto
 
 
+def test_mascarar_pii_oculta_dado_colado_a_letra_sem_espaco() -> None:
+    # \b não marca fronteira entre letra e dígito — sem esse teste, PII grudada a uma palavra
+    # (sem espaço, sem pontuação) passaria batido.
+    assert "11987654321" not in mascarar_pii("Ligue tel11987654321 urgente")
+    assert "123.456.789-00" not in mascarar_pii("cpf123.456.789-00já venceu")
+    assert "4111111111111111" not in mascarar_pii("meucartao4111111111111111vencido")
+
+
 @pytest.mark.asyncio
 async def test_mascarar_stream_pii_detecta_email_dividido_entre_pedacos() -> None:
     async def pedacos():

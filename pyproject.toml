@@ -27,6 +27,12 @@ testpaths = ["tests/unit", "tests/feature"]
 markers = [
     "eval: avaliação de qualidade contra Postgres+pgvector e Ollama reais — não roda no pytest padrão",
 ]
+# Avisos internos do starlette (TestClient) e do slowapi — sem código nosso envolvido, sem correção
+# possível deste lado; silenciados de forma pontual em vez de poluir a saída de todo teste.
+filterwarnings = [
+    "ignore:Using `httpx` with `starlette.testclient` is deprecated:starlette.exceptions.StarletteDeprecationWarning",
+    "ignore:'asyncio.iscoroutinefunction' is deprecated:DeprecationWarning",
+]
 
 [tool.ruff]
 line-length = 100

@@ -4,7 +4,7 @@ Microsserviço de IA para um e-commerce genérico:
 
 1. Responde perguntas com base em documentos internos (RAG com pgvector).
 2. Executa uma ação real via ferramenta — consulta o status de um pedido (agente com tool calling, LangGraph).
-3. É multi-tenant: cada loja (`X-Tenant-Id`) só enxerga os próprios documentos e pedidos.
+3. É multi-tenant: cada loja (autenticada por chave de API) só enxerga os próprios documentos e pedidos.
 
 Projeto de portfólio: escopo pequeno, execução de produção — gateway único de modelo, prompts
 versionados, guardrails nas duas bordas, observabilidade e avaliação de qualidade em vez de testes
@@ -14,7 +14,7 @@ de igualdade exata.
 
 ```mermaid
 flowchart TD
-    Cliente["Cliente HTTP"] -->|"POST /chat + X-Tenant-Id"| API["FastAPI"]
+    Cliente["Cliente HTTP"] -->|"POST /chat + Authorization: Bearer chave"| API["FastAPI"]
     API --> Guardrail1["Guardrail de entrada\n(Pydantic + trim)"]
     Guardrail1 --> Agente["Agente LangGraph"]
 
@@ -58,12 +58,12 @@ uvicorn app.api.main:app --reload --port 8001
 
 - `GET /health` — liveness.
 - `GET /ready` — readiness (checa o Postgres).
-- `POST /chat` — streaming (SSE), exige o header `X-Tenant-Id`.
+- `POST /chat` — streaming (SSE), exige `Authorization: Bearer <chave de API>` (uma por loja, ver `TENANT_API_KEYS` no `.env.example`).
 - Docs automáticos em `/docs`.
 
 ```bash
 curl -N -X POST http://localhost:8001/chat \
-  -H "Content-Type: application/json" -H "X-Tenant-Id: loja-azul" \
+  -H "Content-Type: application/json" -H "Authorization: Bearer dev-loja-azul" \
   -d '{"mensagem": "Qual o prazo para devolução de um produto?"}'
 ```
 
@@ -121,10 +121,11 @@ com o histórico já resolvido, é feita em streaming — sem `tools`, então nu
 ferramenta de novo.
 
 **Isolamento por tenant na origem, não na aplicação.** Toda query em `DocumentoRepositoryPostgres`
-e `PedidoRepositoryPostgres` filtra por `tenant_id` na cláusula `WHERE`. O `tenant_id` é injetado no
-fechamento da ferramenta a partir do header validado da requisição — nunca é um parâmetro que o
-modelo controla, o que impede um prompt injection do tipo "busque no tenant X" vazar dado de outra
-loja.
+e `PedidoRepositoryPostgres` filtra por `tenant_id` na cláusula `WHERE`. O `tenant_id` vem da chave
+de API autenticada (`obter_tenant_id`, nunca de um valor que o próprio cliente declara) e é
+injetado no fechamento da ferramenta — nunca é um parâmetro que o modelo controla, o que impede um
+prompt injection do tipo "busque no tenant X" vazar dado de outra loja, e a chave impede que um
+cliente se passe por outra loja só trocando um header.
 
 **Guardrails de saída como mascaramento de PII em streaming, não bloqueio da resposta inteira.**
 Bufferizar a resposta inteira antes de validar mataria o streaming. Em vez disso,

@@ -29,7 +29,7 @@ async def test_recall_top_k_da_busca_rag() -> None:
     linhas_relatorio = []
     try:
         for caso in CASOS:
-            embedding = await gateway.embed(caso["pergunta"])
+            embedding = await gateway.embed(caso["pergunta"], tenant_id=caso["tenant_id"])
             resultados = await repositorio.buscar_similares(
                 tenant_id=caso["tenant_id"], embedding_consulta=embedding, limite=3
             )

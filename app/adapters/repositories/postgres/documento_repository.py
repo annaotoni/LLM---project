@@ -6,8 +6,17 @@ from fastapi import Depends
 from app.adapters.database import obter_pool
 from app.domain.entities.documento import DocumentoRecuperado
 
+# Fixada pela coluna `embedding VECTOR(384)` em scripts/schema.sql — trocar LLM_EMBEDDING_MODEL por
+# um modelo com dimensão diferente precisa mudar as duas em conjunto.
+DIMENSAO_EMBEDDING = 384
+
 
 def _vetor_para_sql(embedding: list[float]) -> str:
+    if len(embedding) != DIMENSAO_EMBEDDING:
+        raise ValueError(
+            f"Embedding com {len(embedding)} dimensões, esperado {DIMENSAO_EMBEDDING} "
+            f"(coluna VECTOR({DIMENSAO_EMBEDDING}) em schema.sql). Verifique LLM_EMBEDDING_MODEL."
+        )
     return "[" + ",".join(str(valor) for valor in embedding) + "]"
 
 

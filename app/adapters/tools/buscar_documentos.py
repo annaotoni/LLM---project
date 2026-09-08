@@ -42,7 +42,7 @@ def criar_ferramenta_buscar_documentos(
         consulta = argumentos.get("consulta")
         if not consulta:
             return "Parâmetro consulta ausente ou inválido."
-        embedding_consulta = await gateway.embed(consulta)
+        embedding_consulta = await gateway.embed(consulta, tenant_id=tenant_id)
         documentos = await repositorio.buscar_similares(
             tenant_id=tenant_id,
             embedding_consulta=embedding_consulta,

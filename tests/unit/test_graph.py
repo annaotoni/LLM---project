@@ -30,7 +30,7 @@ class GatewayFalso:
     def __init__(self, respostas: list[MensagemFalsa]) -> None:
         self._respostas = iter(respostas)
 
-    async def complete_with_tools(self, *, mensagens, tools, tenant_id, prompt_id):
+    async def complete_with_tools(self, *, mensagens, tools, tenant_id, prompt_id, modelo=None):
         return next(self._respostas)
 
 
@@ -52,6 +52,7 @@ async def test_grafo_encerra_sem_chamar_ferramenta_quando_desnecessario() -> Non
 
     assert resultado["mensagens"] == ESTADO_INICIAL["mensagens"]
     assert resultado["precisa_ferramenta"] is False
+    assert resultado["resposta_final"] == "oi! tudo bem?"
 
 
 @pytest.mark.asyncio
@@ -98,3 +99,4 @@ async def test_grafo_para_apos_numero_maximo_de_iteracoes() -> None:
 
     assert resultado["precisa_ferramenta"] is True
     assert resultado["iteracoes"] > 1
+    assert "resposta_final" not in resultado

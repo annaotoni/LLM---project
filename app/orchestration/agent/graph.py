@@ -17,6 +17,8 @@ class EstadoAgente(TypedDict):
     precisa_ferramenta: bool
     gateway: NotRequired[Any]
     ferramentas: NotRequired[list[Any]]
+    resposta_final: NotRequired[str]
+    modelo: NotRequired[str | None]
 
 
 def _tool_call_para_dict(tool_call: Any) -> dict[str, Any]:
@@ -41,9 +43,16 @@ async def _chamar_modelo(estado: EstadoAgente) -> dict[str, Any]:
         tools=schemas,
         tenant_id=estado["tenant_id"],
         prompt_id=estado["prompt_id"],
+        modelo=estado.get("modelo"),
     )
     if not mensagem.tool_calls:
-        return {"iteracoes": estado["iteracoes"] + 1, "precisa_ferramenta": False}
+        # O modelo já gerou a resposta final aqui — reaproveitada em vez de pedir de novo em
+        # stream_completion, que dobraria o tempo de resposta sem mudar o conteúdo.
+        return {
+            "iteracoes": estado["iteracoes"] + 1,
+            "precisa_ferramenta": False,
+            "resposta_final": mensagem.content or "",
+        }
 
     mensagem_assistente = {
         "role": "assistant",

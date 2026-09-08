@@ -1,10 +1,13 @@
 import re
 from collections.abc import AsyncIterator
 
-_PADRAO_CPF = re.compile(r"\b\d{3}\.?\d{3}\.?\d{3}-?\d{2}\b")
 _PADRAO_EMAIL = re.compile(r"\b[\w.+-]+@[\w-]+\.[\w.-]+\b")
-_PADRAO_CARTAO = re.compile(r"\b(?:\d[ -]?){13,19}\b")
-_PADRAO_TELEFONE = re.compile(r"\b(?:\+55\s?)?\(?\d{2}\)?\s?9?\d{4}-?\d{4}\b")
+
+# Sem \b: um CPF/telefone/cartão colado a uma letra (ex.: "cpf123.456.789-00") não tem fronteira de
+# palavra ali (letra e dígito são ambos \w) — \b deixaria esse trecho passar sem mascarar.
+_PADRAO_CPF = re.compile(r"\d{3}\.?\d{3}\.?\d{3}-?\d{2}")
+_PADRAO_CARTAO = re.compile(r"(?:\d[ -]?){13,19}")
+_PADRAO_TELEFONE = re.compile(r"(?:\+55\s?)?\(?\d{2}\)?\s?9?\d{4}-?\d{4}")
 
 
 def mascarar_pii(texto: str) -> str:

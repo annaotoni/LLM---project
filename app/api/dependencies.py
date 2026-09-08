@@ -1,13 +1,32 @@
 from typing import Annotated
 
-from fastapi import Header, HTTPException, status
+from fastapi import Depends, Header, HTTPException, Request, status
+
+from app.adapters.repositories.contracts.tenant_repository_interface import (
+    TenantRepositoryInterface,
+)
+from app.adapters.repositories.postgres.tenant_repository import get_tenant_repository
 
 
-async def obter_tenant_id(x_tenant_id: Annotated[str | None, Header(alias="X-Tenant-Id")] = None) -> str:
-    """Isola cada requisição por tenant; sem o header, não há como saber de quem são os dados."""
-    if not x_tenant_id:
+async def obter_tenant_id(
+    request: Request,
+    tenant_repositorio: Annotated[TenantRepositoryInterface, Depends(get_tenant_repository)],
+    authorization: Annotated[str | None, Header()] = None,
+) -> str:
+    """O tenant vem da chave de API cadastrada no banco, nunca de um valor que o cliente declara."""
+    if not authorization or not authorization.startswith("Bearer "):
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Header X-Tenant-Id é obrigatório",
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Header Authorization: Bearer <chave de API> é obrigatório",
         )
-    return x_tenant_id
+    chave = authorization.removeprefix("Bearer ").strip()
+    autenticado = await tenant_repositorio.autenticar_por_chave(chave_api=chave)
+    if autenticado is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Chave de API inválida",
+        )
+    # O rate limiter (app/api/limiter.py) e a rota de chat leem daqui — evita repetir a consulta.
+    request.state.tenant_id = autenticado.tenant_id
+    request.state.modelo_override = autenticado.modelo_override
+    return autenticado.tenant_id

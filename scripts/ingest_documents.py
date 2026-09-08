@@ -24,7 +24,7 @@ async def ingerir() -> None:
             for arquivo in sorted(pasta_tenant.glob("*.md")):
                 conteudo = arquivo.read_text(encoding="utf-8").strip()
                 titulo = conteudo.splitlines()[0].lstrip("# ").strip()
-                embedding = await gateway.embed(conteudo)
+                embedding = await gateway.embed(conteudo, tenant_id=tenant_id)
                 await repositorio.inserir(
                     tenant_id=tenant_id,
                     titulo=titulo,
