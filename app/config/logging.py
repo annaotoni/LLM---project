@@ -23,6 +23,10 @@ class FormatadorJSON(logging.Formatter):
 
 
 def configurar_logging(nivel: int = logging.INFO) -> None:
+    # Fora do Docker, o Windows abre stdout no codepage do console (cp1252, não UTF-8) — sem
+    # isso, acento sai como byte errado (silencioso) em vez de erro, e corrompe o log em disco.
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(encoding="utf-8")
     handler = logging.StreamHandler(sys.stdout)
     handler.setFormatter(FormatadorJSON())
     logging.basicConfig(level=nivel, handlers=[handler], force=True)
